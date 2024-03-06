@@ -35,7 +35,7 @@ This repository contains a GraphQL server implementation integrated with Postgre
 4. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/graphql-postgresql-server.git
+    git clone 
     ```
 
 5. **Install dependencies:**
