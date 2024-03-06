@@ -35,7 +35,7 @@ This repository contains a GraphQL server implementation integrated with Postgre
 4. **Clone the repository:**
 
     ```bash
-    git clone 
+    git clone https://github.com/adnanemandili/GraphQL-Teturial.git
     ```
 
 5. **Install dependencies:**
@@ -87,4 +87,4 @@ Feel free to contribute to this project by opening issues or submitting pull req
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+
