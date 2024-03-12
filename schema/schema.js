@@ -26,7 +26,7 @@ const AuthorType = new GraphQLObjectType({
     name: "Author",                 // Name of the GraphQL object type
     fields: () => ({                // Define the fields of the Author type
         id: { type: GraphQLString },   // Author ID
-        name: { type: GraphQLString }, // Author name
+        name: { type: GraphQLString}, // Author name
         books: {                       // List of books written by the author
             type: new GraphQLList(BookType),
             resolve(parent, args) {
@@ -57,7 +57,7 @@ const RootQuery = new GraphQLObjectType({
         book: {
             type: BookType,        // Return type of the query
             args: {
-                id: { type: GraphQLString } // ID of the book to retrieve
+                id: { type: new GraphQLNonNull(GraphQLString) } // ID of the book to retrieve
             },
             resolve(parent, args) {
                 // Resolve function to fetch book data from the database
@@ -78,7 +78,7 @@ const RootQuery = new GraphQLObjectType({
         author: {
             type: AuthorType,       // Return type of the query
             args: {
-                id: { type: GraphQLString } // ID of the author to retrieve
+                id: { type: new GraphQLNonNull(GraphQLString) } // ID of the author to retrieve
             },
             resolve(parent, args) {
                 // Resolve function to fetch author data from the database
@@ -106,8 +106,8 @@ const Mutation = new GraphQLObjectType({
         addBook: {
             type: BookType,     // Return type of the mutation
             args: {
-                name: { type: GraphQLString },       // Name of the new book
-                genre: { type: GraphQLString },      // Genre of the new book
+                name: { type: new GraphQLNonNull(GraphQLString) },       // Name of the new book
+                genre: { type: new GraphQLNonNull(GraphQLString) },      // Genre of the new book
                 authorId: { type: GraphQLString }    // ID of the author who wrote the book
             },
             resolve(parent, args) {
@@ -117,17 +117,72 @@ const Mutation = new GraphQLObjectType({
                     .then(res => res.rows[0]);
             }
         },
+         // Mutation pour mettre à jour un livre existant
+         updateBook: {
+            type: BookType,  // Type de retour de la mutation
+            args: {
+                id: { type: GraphQLString },   // ID du livre à mettre à jour
+                name: { type: GraphQLString }, // Nouveau nom du livre
+                genre: { type: GraphQLString } // Nouveau genre du livre
+            },
+            async resolve(parent, args) {
+                const { id, name, genre } = args;
+                // Mise à jour d'un livre existant dans la base de données PostgreSQL
+                const { rows } = await pool.query('UPDATE book SET name = $1, genre = $2 WHERE id = $3 RETURNING *', [name, genre, id]);
+                return rows[0];
+            }
+        },
+        // Mutation pour supprimer un livre existant
+        deleteBook: {
+            type: BookType,  // Type de retour de la mutation
+            args: {
+                id: { type: GraphQLString } // ID du livre à supprimer
+            },
+            async resolve(parent, args) {
+                const { id } = args;
+                // Suppression d'un livre existant de la base de données PostgreSQL
+                const { rows } = await pool.query('DELETE FROM book WHERE id = $1 RETURNING *', [id]);
+                return rows[0];
+            }
+        },
         // Mutation to add a new author
         addAuthor: {
             type: AuthorType,    // Return type of the mutation
             args: {
-                name: { type: GraphQLString } // Name of the new author
+                name: { type: new GraphQLNonNull(GraphQLString) } // Name of the new author
             },
             resolve(parent, args) {
                 // Resolve function to add a new author to the database
                 const { name } = args;
                 return pool.query('INSERT INTO author(name) VALUES($1) RETURNING *', [name])
                     .then(res => res.rows[0]);
+            }
+        },
+        // Mutation pour mettre à jour un auteur existant
+        updateAuthor: {
+            type: AuthorType,  // Type de retour de la mutation
+            args: {
+                id: { type: GraphQLString },   // ID de l'auteur à mettre à jour
+                name: { type: GraphQLString } // Nouveau nom de l'auteur
+            },
+            async resolve(parent, args) {
+                const { id, name } = args;
+                // Mise à jour d'un auteur existant dans la base de données PostgreSQL
+                const { rows } = await pool.query('UPDATE author SET name = $1 WHERE id = $2 RETURNING *', [name, id]);
+                return rows[0];
+            }
+        },
+        // Mutation pour supprimer un auteur existant
+        deleteAuthor: {
+            type: AuthorType,  // Type de retour de la mutation
+            args: {
+                id: { type: GraphQLString } // ID de l'auteur à supprimer
+            },
+            async resolve(parent, args) {
+                const { id } = args;
+                // Suppression d'un auteur existant de la base de données PostgreSQL
+                const { rows } = await pool.query('DELETE FROM author WHERE id = $1 RETURNING *', [id]);
+                return rows[0];
             }
         }
     }
