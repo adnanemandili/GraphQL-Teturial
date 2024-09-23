@@ -6,20 +6,44 @@ const {
     GraphQLString,         // Define GraphQL string type
     GraphQLSchema,         // Define GraphQL schema
     GraphQLList,           // Define GraphQL list type
-    GraphQLNonNull         // Define GraphQL non-null type
+    GraphQLNonNull ,        // Define GraphQL non-null type
+    GraphQLInt
 } = require('graphql');
 
-// Import the PostgreSQL client
-const { Pool } = require('pg');
+// app.js
+const { Pool } = require('pg');  // Import Pool from pg module
+require('dotenv').config();
+
+let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPOINT_ID } = process.env;
+PGPASSWORD = decodeURIComponent(PGPASSWORD); // Decode password if needed
 
 // Create a PostgreSQL connection pool
 const pool = new Pool({
-    user: 'postgres',          // PostgreSQL username
-    host: 'localhost',         // PostgreSQL host
-    database: 'Books',         // PostgreSQL database name
-    password: 'admin',         // PostgreSQL password
-    port: 5432                 // Default PostgreSQL port
+  host: PGHOST,               // Your Neon database host
+  database: PGDATABASE,       // Your database name
+  user: PGUSER,               // Your database username
+  password: PGPASSWORD,       // Your database password
+  port: 5432,                 // Default PostgreSQL port
+  ssl: {
+    rejectUnauthorized: false, // Set to false for local testing; true in production
+  },
 });
+
+// Function to get PostgreSQL version
+async function getPgVersion() {
+  const client = await pool.connect(); // Get a client from the pool
+  try {
+    const result = await client.query('SELECT version()');
+    console.log(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching PostgreSQL version:", error);
+  } finally {
+    client.release(); // Release the client back to the pool
+  }
+}
+
+// Call the function
+getPgVersion()
 
 // Define the Author type
 const AuthorType = new GraphQLObjectType({
@@ -65,6 +89,19 @@ const RootQuery = new GraphQLObjectType({
                     .then(res => res.rows[0]);
             }
         },
+
+        //Query to get the number of this elements , the number has been entred in args 
+        findBooks: {
+            type: new GraphQLList(BookType),  // Return a list of books
+            args: {
+                number: { type: new GraphQLNonNull(GraphQLString) }  // 'number' should be an integer
+            },
+            resolve(parent, args) {
+                return pool.query('SELECT * FROM book ORDER BY id LIMIT $1', [args.number])
+                    .then(res => res.rows);  // Return all rows, not just the first one
+            }
+        },
+
         // Query to get all books
         books: {
             type: new GraphQLList(BookType), // Return type of the query

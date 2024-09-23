@@ -36,9 +36,15 @@
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql'); // Import GraphQL HTTP middleware
 const schema = require('./schema/schema'); // Import GraphQL schema
+const cors = require('cors');
 
 // Create an Express application
 const app = express();
+
+//cros 
+app.use(cors({
+    origin: 'http://localhost:5174',
+}));
 
 // Define GraphQL endpoint
 app.use('/graphql', graphqlHTTP({
